@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Calendar, Coins, Trophy, Users, Gamepad2 } from "lucide-react";
 import { redis } from "@/lib/upstash/client";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { NeonButton } from "@/components/ui/NeonButton";
+import { PaymentCheckout } from "@/components/forms/PaymentCheckout";
 
 interface Tournament {
     id: string;
@@ -66,9 +66,11 @@ export default async function TournamentDetailPage({
                     </div>
                 </div>
 
-                <NeonButton variant="magenta" className="w-full">
-                    Register &amp; Pay
-                </NeonButton>
+                <PaymentCheckout
+                    tournamentId={tournament.id}
+                    tournamentName={tournament.name}
+                    entryFee={Number(tournament.entry_fee)}
+                />
             </GlassCard>
         </div>
     );
