@@ -86,7 +86,7 @@ export async function POST(req: Request) {
 
         if (rpcError.code === "23505") {
             return NextResponse.json(
-                { error: "You already have an active registration for this tournament" },
+                { error: "You already have a registration in progress for this tournament. If you cancelled a payment, it clears automatically within about 15 minutes — try again shortly." },
                 { status: 409 }
             );
         }

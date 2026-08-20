@@ -96,23 +96,16 @@ export function PaymentCheckout({ tournamentId, tournamentName, entryFee }: Paym
                 prefill: { email: data.userEmail },
                 theme: { color: "#00f6ff" },
                 handler: () => {
-                    // Payment authorized client-side. Actual fulfillment (status ->
-                    // PAID + team_code) happens asynchronously via the Razorpay
-                    // webhook hitting procez-core, so we hand off to polling rather
-                    // than trusting this callback for anything beyond "show the
-                    // success UI."
                     setOrderId(data.orderId);
                     setState("paid");
                 },
                 modal: {
-                    ondismiss: async () => {
-                        await fetch("/api/cancel-order", {
-                            method: "DELETE",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ tournamentId }),
-                        });
-                        setState("idle");
-                    },
+                    // No client-side cleanup call here anymore. A dismissed/abandoned
+                    // checkout leaves a PENDING order behind on purpose — it's reaped
+                    // by the pg_cron job in procez-core (0006_pg_cron_cleanup.sql)
+                    // every 5 minutes once it's older than 15 minutes. This keeps
+                    // the service-role key out of this codebase entirely.
+                    ondismiss: () => setState("idle"),
                 },
             });
 
