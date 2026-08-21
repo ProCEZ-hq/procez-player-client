@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JoinTeamForm } from "@/components/team/JoinTeamForm";
 import { TeamCard } from "@/components/team/TeamCard";
+import { BroadcastListener } from "@/components/team/BroadcastListener";
 
 interface TeamRow {
     id: string;
     team_code: string;
     leader_id: string;
-    tournaments: { name: string; game_name: string; team_size: number } | null;
+    tournaments: { id: string; name: string; game_name: string; team_size: number } | null;
     roster_slots: {
         id: string;
         user_id: string;
@@ -32,7 +33,7 @@ export default async function MyTournamentsPage() {
         .select(
             `
       id, team_code, leader_id,
-      tournaments ( name, game_name, team_size ),
+      tournaments ( id, name, game_name, team_size ),
       roster_slots ( id, user_id, joined_at, profiles ( gamertag, avatar_url ) )
     `
         )
@@ -44,6 +45,11 @@ export default async function MyTournamentsPage() {
 
     const rows = (teams ?? []) as unknown as TeamRow[];
 
+    const tournamentLookup = rows
+        .map((t) => t.tournaments)
+        .filter((t): t is NonNullable<typeof t> => t !== null)
+        .map((t) => ({ id: t.id, name: t.name }));
+
     return (
         <div className="min-h-screen px-6 py-12 max-w-4xl mx-auto space-y-8">
             <div>
@@ -52,6 +58,8 @@ export default async function MyTournamentsPage() {
                 </h1>
                 <p className="text-white/50">Your teams, rosters, and invite codes.</p>
             </div>
+
+            <BroadcastListener tournaments={tournamentLookup} />
 
             <JoinTeamForm />
 

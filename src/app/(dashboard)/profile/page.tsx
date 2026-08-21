@@ -6,11 +6,18 @@ import { createClient } from "@/lib/supabase/client";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { Upload, User } from "lucide-react";
+import { RetroBadge } from "@/components/ui/RetroBadge";
 
 interface GameIds {
     riot_id: string;
     bgmi_uid: string;
     valorant_id: string;
+}
+
+interface Badge {
+    id: string;
+    badge_name: string;
+    awarded_at: string;
 }
 
 export default function ProfilePage() {
@@ -26,6 +33,7 @@ export default function ProfilePage() {
         bgmi_uid: "",
         valorant_id: "",
     });
+    const [badges, setBadges] = useState<Badge[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -59,6 +67,15 @@ export default function ProfilePage() {
                     valorant_id: profile.game_ids?.valorant_id ?? "",
                 });
             }
+
+            const { data: badgeRows } = await supabase
+                .from("user_badges")
+                .select("id, badge_name, awarded_at")
+                .eq("user_id", user.id)
+                .order("awarded_at", { ascending: true });
+                    
+            setBadges(badgeRows ?? []);
+
 
             setLoading(false);
         }
@@ -228,6 +245,19 @@ export default function ProfilePage() {
                         Save Profile
                     </NeonButton>
                 </form>
+
+                {badges.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-white/10">
+                    <p className="text-xs uppercase tracking-wide text-white/50 mb-3">
+                        Badges Earned
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                        {badges.map((b) => (
+                        <RetroBadge key={b.id} badgeName={b.badge_name} />
+                        ))}
+                    </div>
+                    </div>
+                )}
             </GlassCard>
         </div>
     );
