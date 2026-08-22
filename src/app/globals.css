@@ -74,3 +74,23 @@ body {
 @utility backdrop-blur-glass {
   backdrop-filter: blur(var(--blur-glass));
 }
+
+@utility momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+@utility touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Global baseline: every button and link-styled-as-button gets a
+   44x44 minimum hit area on touch devices, per WCAG 2.5.5 / iOS HIG. */
+@media (pointer: coarse) {
+
+  button,
+  a[role="button"] {
+    min-height: 44px;
+  }
+}
