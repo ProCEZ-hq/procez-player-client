@@ -1,7 +1,7 @@
-import { Users, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { NextMatchCountdown } from "@/components/hub/NextMatchCountdown";
+import { NextMatchHero } from "@/components/hub/NextMatchHero";
+import { PerformanceGrid } from "@/components/hub/PerformanceGrid";
+import { TrophyCase } from "@/components/hub/TrophyCase";
 import { AnnouncementFeed } from "@/components/hub/AnnouncementFeed";
 
 interface PlayerSummary {
@@ -24,6 +24,13 @@ interface Announcement {
     created_at: string;
 }
 
+interface Badge {
+    id: string;
+    badge_name: string;
+}
+
+const TOTAL_BADGE_SLOTS = 6;
+
 export default async function HomePage() {
     const supabase = await createClient();
 
@@ -31,61 +38,50 @@ export default async function HomePage() {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Layout already redirects unauthenticated visitors before this renders.
     if (!user) return null;
 
-    const [{ data: summaryData, error: summaryError }, { data: announcements }] = await Promise.all([
+    const [
+        { data: summaryData, error: summaryError },
+        { data: announcements },
+        { data: badges },
+    ] = await Promise.all([
         supabase.rpc("get_player_summary", { user_uuid: user.id }),
         supabase
             .from("platform_announcements")
             .select("id, title, message, type, created_at")
             .order("created_at", { ascending: false })
             .limit(3),
+        supabase
+            .from("user_badges")
+            .select("id, badge_name")
+            .eq("user_id", user.id)
+            .order("awarded_at", { ascending: true }),
     ]);
 
-    if (summaryError) {
-        throw new Error(summaryError.message);
-    }
+    if (summaryError) throw new Error(summaryError.message);
 
     const summary = summaryData as PlayerSummary | null;
+    const badgeList = (badges ?? []) as Badge[];
 
     return (
-        <div className="px-6 py-10 max-w-5xl mx-auto space-y-6">
+        <div className="p-container-padding max-w-5xl mx-auto space-y-container-padding">
             <div>
-                <h1 className="text-3xl font-display font-bold text-glow-cyan mb-1">Welcome back</h1>
-                <p className="text-white/50">Here&apos;s what&apos;s happening across your tournaments.</p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-on-surface mb-1">Welcome back</h1>
+                <p className="text-on-surface-variant">Here&apos;s what&apos;s happening across your tournaments.</p>
             </div>
 
-            <NextMatchCountdown tournament={summary?.next_tournament ?? null} />
+            <NextMatchHero tournament={summary?.next_tournament ?? null} />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <GlassCard glow="cyan">
-                    <div className="flex items-center gap-3">
-                        <Users className="text-neon-cyan" size={22} />
-                        <div>
-                            <p className="text-xs uppercase tracking-wide text-white/50">Active Teams</p>
-                            <p className="text-2xl font-semibold">{summary?.total_active_teams ?? 0}</p>
-                        </div>
-                    </div>
-                </GlassCard>
+            <PerformanceGrid
+                activeTeams={summary?.total_active_teams ?? 0}
+                badgesEarned={badgeList.length}
+                totalBadgeSlots={TOTAL_BADGE_SLOTS}
+            />
 
-                <GlassCard>
-                    <div className="flex items-center gap-3">
-                        <Trophy className="text-neon-lime" size={22} />
-                        <div>
-                            <p className="text-xs uppercase tracking-wide text-white/50">Latest Badge</p>
-                            <p className="text-lg font-semibold">
-                                {summary?.latest_badge?.badge_name ?? "None yet"}
-                            </p>
-                        </div>
-                    </div>
-                </GlassCard>
-            </div>
+            <TrophyCase badges={badgeList} />
 
             <div>
-                <p className="text-white/50 text-xs uppercase tracking-wide mb-3">
-                    Platform Announcements
-                </p>
+                <p className="text-on-surface-variant text-xs uppercase tracking-widest mb-4">Platform Announcements</p>
                 <AnnouncementFeed announcements={(announcements ?? []) as Announcement[]} />
             </div>
         </div>

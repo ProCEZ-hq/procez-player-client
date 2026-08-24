@@ -1,5 +1,5 @@
 import { Megaphone, AlertTriangle, Wrench } from "lucide-react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { TactileCard } from "@/components/ui/TactileCard";
 
 interface Announcement {
     id: string;
@@ -9,34 +9,37 @@ interface Announcement {
     created_at: string;
 }
 
-const TYPE_CONFIG: Record<Announcement["type"], { icon: React.ReactNode; glow: "cyan" | "magenta" | "none" }> = {
-    INFO: { icon: <Megaphone size={16} className="text-neon-cyan" />, glow: "cyan" },
-    ALERT: { icon: <AlertTriangle size={16} className="text-neon-magenta" />, glow: "magenta" },
-    MAINTENANCE: { icon: <Wrench size={16} className="text-neon-lime" />, glow: "none" },
+const TYPE_CONFIG: Record<Announcement["type"], { icon: React.ReactNode; label: string; classes: string }> = {
+    INFO: { icon: <Megaphone size={12} />, label: "Info", classes: "text-accent" },
+    ALERT: { icon: <AlertTriangle size={12} />, label: "Alert", classes: "text-error" },
+    MAINTENANCE: { icon: <Wrench size={12} />, label: "Maintenance", classes: "text-tertiary-container" },
 };
 
 export function AnnouncementFeed({ announcements }: { announcements: Announcement[] }) {
     if (announcements.length === 0) {
-        return <p className="text-white/40 text-sm">No announcements right now.</p>;
+        return (
+            <TactileCard>
+                <p className="text-on-surface-variant text-sm">No announcements right now.</p>
+            </TactileCard>
+        );
     }
 
     return (
-        <div className="space-y-3 max-h-80 overflow-y-auto momentum-scroll pr-1">
+        <div className="space-y-4 max-h-80 overflow-y-auto momentum-scroll pr-1">
             {announcements.map((a) => {
                 const config = TYPE_CONFIG[a.type];
                 return (
-                    <GlassCard key={a.id} glow={config.glow}>
-                        <div className="flex items-start gap-3">
-                            <div className="mt-0.5 shrink-0">{config.icon}</div>
-                            <div className="min-w-0">
-                                <p className="font-semibold truncate">{a.title}</p>
-                                <p className="text-white/60 text-sm">{a.message}</p>
-                                <p className="text-white/30 text-xs mt-1">
-                                    {new Date(a.created_at).toLocaleString()}
-                                </p>
-                            </div>
+                    <TactileCard key={a.id} className="p-4">
+                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                            <p className="font-semibold text-on-surface truncate">{a.title}</p>
+                            <span className={`shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold ${config.classes}`}>
+                                {config.icon}
+                                {config.label}
+                            </span>
                         </div>
-                    </GlassCard>
+                        <p className="text-on-surface-variant text-sm">{a.message}</p>
+                        <p className="text-on-surface-variant/60 text-xs mt-1.5">{new Date(a.created_at).toLocaleString()}</p>
+                    </TactileCard>
                 );
             })}
         </div>

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, Users, User } from "lucide-react";
+import { Home, Compass, Users, User, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const NAV_ITEMS = [
     { href: "/home", label: "Home", icon: Home },
@@ -12,37 +13,76 @@ const NAV_ITEMS = [
     { href: "/profile", label: "Profile", icon: User },
 ];
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+    collapsed: boolean;
+    onToggle: () => void;
+}
+
+export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps) {
     const pathname = usePathname();
 
     return (
-        <aside className="hidden md:flex md:flex-col w-64 shrink-0 min-h-screen sticky top-0 backdrop-blur-glass bg-white/[0.03] border-r border-white/10 px-4 py-6">
-            <div className="px-2 mb-8">
-                <h1 className="text-lg font-display font-bold text-glow-cyan">
-                    Pro<span className="text-neon-magenta">CEZ</span>
-                </h1>
+        <aside
+            className={cn(
+                "hidden md:flex md:flex-col fixed left-0 top-0 h-screen z-40 bg-surface p-gutter gap-unit",
+                "neu-extruded transition-[width] duration-200",
+                collapsed ? "w-20" : "w-64"
+            )}
+        >
+            <div className="flex items-center gap-3 px-2 py-4 mb-4">
+                <div className="w-11 h-11 rounded-full neu-inset flex items-center justify-center text-accent font-extrabold shrink-0">
+                    P
+                </div>
+                {!collapsed && (
+                    <h1 className="font-extrabold tracking-tight text-on-surface truncate">
+                        Pro<span className="text-accent">CEZ</span>
+                    </h1>
+                )}
             </div>
 
-            <nav className="flex flex-col gap-1">
+            <nav className="flex-1 flex flex-col gap-3 px-1">
                 {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                     const active = pathname === href || pathname?.startsWith(`${href}/`);
                     return (
                         <Link
                             key={href}
                             href={href}
+                            title={collapsed ? label : undefined}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-3 rounded-lg text-sm min-h-[44px] transition-colors",
+                                "flex items-center gap-4 rounded-xl px-4 min-h-12 bg-surface transition-all duration-150 ease-out",
                                 active
-                                    ? "bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/30 shadow-neon-cyan"
-                                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                                    ? "neu-inset text-accent translate-x-0.5 translate-y-0.5"
+                                    : "neu-extruded text-on-surface-variant hover:text-accent"
                             )}
                         >
-                            <Icon size={20} />
-                            {label}
+                            <Icon size={20} className="shrink-0" />
+                            {!collapsed && <span className="text-sm font-semibold truncate">{label}</span>}
                         </Link>
                     );
                 })}
             </nav>
+
+            <div className="flex items-center justify-between px-1 mb-2 gap-2">
+                <ThemeToggle />
+                {!collapsed ? (
+                    <button
+                        onClick={onToggle}
+                        className="neu-extruded neu-button flex-1 min-h-12 rounded-xl bg-surface text-on-surface-variant hover:text-accent flex items-center justify-center gap-2 text-sm"
+                        aria-label="Collapse sidebar"
+                    >
+                        <ChevronsLeft size={18} />
+                        Collapse
+                    </button>
+                ) : (
+                    <button
+                        onClick={onToggle}
+                        className="neu-extruded neu-button w-10 h-10 rounded-full bg-surface text-on-surface-variant hover:text-accent flex items-center justify-center"
+                        aria-label="Expand sidebar"
+                    >
+                        <ChevronsRight size={18} />
+                    </button>
+                )}
+            </div>
         </aside>
     );
 }

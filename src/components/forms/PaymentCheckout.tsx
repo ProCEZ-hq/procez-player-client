@@ -4,7 +4,7 @@ import { useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { NeonButton } from "@/components/ui/NeonButton";
+import { TactileButton } from "@/components/ui/TactileButton";
 import { RegistrationSuccess } from "./RegistrationSuccess";
 
 declare global {
@@ -25,30 +25,25 @@ interface RazorpayOptions {
     handler: (response: RazorpayHandlerResponse) => void;
     modal?: { ondismiss?: () => void };
 }
-
 interface RazorpayHandlerResponse {
     razorpay_payment_id: string;
     razorpay_order_id: string;
     razorpay_signature: string;
 }
-
 interface RazorpayInstance {
     open: () => void;
     on: (event: string, handler: (response: unknown) => void) => void;
 }
-
 interface PaymentCheckoutProps {
     tournamentId: string;
     tournamentName: string;
     entryFee: number;
 }
-
 type FlowState = "idle" | "creating-order" | "paid" | "error";
 
 export function PaymentCheckout({ tournamentId, tournamentName, entryFee }: PaymentCheckoutProps) {
     const router = useRouter();
     const supabase = createClient();
-
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [state, setState] = useState<FlowState>("idle");
     const [error, setError] = useState<string | null>(null);
@@ -56,35 +51,26 @@ export function PaymentCheckout({ tournamentId, tournamentName, entryFee }: Paym
 
     async function handleRegister() {
         setError(null);
-
         const {
             data: { user },
         } = await supabase.auth.getUser();
-
         if (!user) {
             router.push(`/login?next=/tournaments/${tournamentId}`);
             return;
         }
-
         if (!scriptLoaded || !window.Razorpay) {
             setError("Payment gateway is still loading — try again in a moment.");
             return;
         }
-
         setState("creating-order");
-
         try {
             const res = await fetch("/api/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ tournamentId }),
             });
-
             const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error ?? "Could not start checkout");
-            }
+            if (!res.ok) throw new Error(data.error ?? "Could not start checkout");
 
             const rzp = new window.Razorpay({
                 key: data.keyId,
@@ -94,19 +80,12 @@ export function PaymentCheckout({ tournamentId, tournamentName, entryFee }: Paym
                 description: data.tournamentName,
                 order_id: data.razorpayOrderId,
                 prefill: { email: data.userEmail },
-                theme: { color: "#00f6ff" },
+                theme: { color: "#00f2fe" },
                 handler: () => {
                     setOrderId(data.orderId);
                     setState("paid");
                 },
-                modal: {
-                    // No client-side cleanup call here anymore. A dismissed/abandoned
-                    // checkout leaves a PENDING order behind on purpose — it's reaped
-                    // by the pg_cron job in procez-core (0006_pg_cron_cleanup.sql)
-                    // every 5 minutes once it's older than 15 minutes. This keeps
-                    // the service-role key out of this codebase entirely.
-                    ondismiss: () => setState("idle"),
-                },
+                modal: { ondismiss: () => setState("idle") },
             });
 
             rzp.on("payment.failed", () => {
@@ -127,25 +106,11 @@ export function PaymentCheckout({ tournamentId, tournamentName, entryFee }: Paym
 
     return (
         <>
-            <Script
-                src="https://checkout.razorpay.com/v1/checkout.js"
-                onLoad={() => setScriptLoaded(true)}
-            />
-
-            <NeonButton
-                variant="magenta"
-                onClick={handleRegister}
-                loading={state === "creating-order"}
-                className="w-full"
-            >
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" onLoad={() => setScriptLoaded(true)} />
+            <TactileButton variant="accent" onClick={handleRegister} loading={state === "creating-order"} className="w-full">
                 {entryFee > 0 ? `Register & Pay ₹${entryFee}` : "Register — Free Entry"}
-            </NeonButton>
-
-            {error && (
-                <p className="text-neon-magenta text-sm border border-neon-magenta/30 bg-neon-magenta/10 rounded-lg px-3 py-2 mt-3">
-                    {error}
-                </p>
-            )}
+            </TactileButton>
+            {error && <p className="text-error text-sm neu-inset bg-surface-container-lowest rounded-lg px-3 py-2 mt-3">{error}</p>}
         </>
     );
 }

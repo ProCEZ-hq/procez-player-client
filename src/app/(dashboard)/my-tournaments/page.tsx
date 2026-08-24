@@ -19,14 +19,10 @@ interface TeamRow {
 
 export default async function MyTournamentsPage() {
     const supabase = await createClient();
-
     const {
         data: { user },
     } = await supabase.auth.getUser();
-
-    if (!user) {
-        redirect("/login?next=/my-tournaments");
-    }
+    if (!user) redirect("/login?next=/my-tournaments");
 
     const { data: teams, error } = await supabase
         .from("teams")
@@ -39,37 +35,30 @@ export default async function MyTournamentsPage() {
         )
         .order("created_at", { ascending: false });
 
-    if (error) {
-        throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 
     const rows = (teams ?? []) as unknown as TeamRow[];
-
     const tournamentLookup = rows
         .map((t) => t.tournaments)
         .filter((t): t is NonNullable<typeof t> => t !== null)
         .map((t) => ({ id: t.id, name: t.name }));
 
     return (
-        <div className="min-h-screen px-6 py-12 max-w-4xl mx-auto space-y-8">
+        <div className="p-container-padding max-w-4xl mx-auto space-y-container-padding">
             <div>
-                <h1 className="text-3xl font-display font-bold text-glow-cyan mb-2">
-                    My Tournaments
-                </h1>
-                <p className="text-white/50">Your teams, rosters, and invite codes.</p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-on-surface mb-1">My Teams</h1>
+                <p className="text-on-surface-variant">Your roster command deck.</p>
             </div>
 
             <BroadcastListener tournaments={tournamentLookup} />
-
             <JoinTeamForm />
 
             {rows.length === 0 ? (
-                <p className="text-white/40 text-center py-8">
-                    You&apos;re not on any team yet. Register for a tournament or join one with a
-                    team code above.
+                <p className="text-on-surface-variant text-center py-8">
+                    You&apos;re not on any team yet. Register for a tournament or join one with a team code above.
                 </p>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-container-padding">
                     {rows.map((team) => (
                         <TeamCard
                             key={team.id}
