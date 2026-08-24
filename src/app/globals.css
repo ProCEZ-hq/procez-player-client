@@ -1,13 +1,20 @@
+/* Remote font import MUST come before @import "tailwindcss" — Tailwind v4
+   expands its own import inline, and any @import appearing after those
+   expanded rules fails the CSS spec ("@import rules must precede all
+   rules aside from @charset and @layer"). */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ============================================================
-   THEME TOKENS — replaces tailwind.config.ts `extend`
-   Every --color-*, --font-*, --shadow-* below auto-generates
-   utilities: bg-void, text-neon-cyan, shadow-neon-cyan, etc.
+   LEGACY THEME (Phases 1–6) — retained only because
+   src/app/(auth)/* and src/app/(dashboard)/profile still import
+   GlassCard / NeonButton / RetroBadge and are outside this
+   phase's scope. The old --color-surface line is dropped below
+   since it's superseded by the new dynamic "surface" token and
+   was never actually referenced by any component.
    ============================================================ */
 @theme {
   --color-void: #0a0a12;
-  --color-surface: #12121f;
 
   --color-neon-cyan: #00f6ff;
   --color-neon-magenta: #ff2ee6;
@@ -26,53 +33,221 @@
 }
 
 /* ============================================================
-   BASE
+   NEUMORPHIC THEME (Phase 7) — M3-style semantic tokens, mirrored
+   from DESIGN.md / dark-code.html / light-code.html, exposed as
+   real CSS custom properties so next-themes' class strategy can
+   swap them at runtime without a rebuild.
    ============================================================ */
+:root {
+  /* Dark values by default — matches defaultTheme="dark" below,
+     avoids a flash-of-wrong-theme before hydration. */
+  --surface: #111319;
+  --surface-dim: #111319;
+  --surface-bright: #37393f;
+  --surface-container-lowest: #0c0e14;
+  --surface-container-low: #191b21;
+  --surface-container: #1d1f25;
+  --surface-container-high: #282a30;
+  --surface-container-highest: #33353b;
+  --surface-variant: #33353b;
+  --on-surface: #e2e2ea;
+  --on-surface-variant: #b9cacb;
+  --background: #111319;
+  --on-background: #e2e2ea;
+
+  --primary: #e0fdff;
+  --on-primary: #00373a;
+  --primary-container: #00f2fe;
+  --on-primary-container: #006a70;
+
+  --secondary: #ffb77a;
+  --on-secondary: #4c2700;
+  --secondary-container: #d37b20;
+  --on-secondary-container: #432100;
+
+  --tertiary: #fff6e4;
+  --tertiary-container: #fed83a;
+  --on-tertiary-container: #725e00;
+
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  --outline: #849495;
+  --outline-variant: #3a494b;
+
+  /* Reconciled accent layer — see note above on primary/primary-
+     container role-swap between the two reference files. */
+  --accent: #00f2fe;
+  --on-accent: #00373a;
+  --accent-soft: #e0fdff;
+
+  /* Dual-shadow physics: highlight side / shadow side. */
+  --neu-hi: #282c34;
+  --neu-lo: #14151a;
+}
+
+.dark {
+  --surface: #111319;
+  --surface-dim: #111319;
+  --surface-bright: #37393f;
+  --surface-container-lowest: #0c0e14;
+  --surface-container-low: #191b21;
+  --surface-container: #1d1f25;
+  --surface-container-high: #282a30;
+  --surface-container-highest: #33353b;
+  --surface-variant: #33353b;
+  --on-surface: #e2e2ea;
+  --on-surface-variant: #b9cacb;
+  --background: #111319;
+  --on-background: #e2e2ea;
+
+  --primary: #e0fdff;
+  --on-primary: #00373a;
+  --primary-container: #00f2fe;
+  --on-primary-container: #006a70;
+
+  --secondary: #ffb77a;
+  --on-secondary: #4c2700;
+  --secondary-container: #d37b20;
+  --on-secondary-container: #432100;
+
+  --tertiary: #fff6e4;
+  --tertiary-container: #fed83a;
+  --on-tertiary-container: #725e00;
+
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  --outline: #849495;
+  --outline-variant: #3a494b;
+
+  --accent: #00f2fe;
+  --on-accent: #00373a;
+  --accent-soft: #e0fdff;
+
+  --neu-hi: #282c34;
+  --neu-lo: #14151a;
+}
+
+.light {
+  --surface: #e8ecf2;
+  --surface-dim: #d0d7e2;
+  --surface-bright: #ffffff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f5f9;
+  --surface-container: #dce1e9;
+  --surface-container-high: #cbd5e1;
+  --surface-container-highest: #94a3b8;
+  --surface-variant: #e2e8f0;
+  --on-surface: #1e293b;
+  --on-surface-variant: #475569;
+  --background: #e8ecf2;
+  --on-background: #1e293b;
+
+  --primary: #4f46e5;
+  --on-primary: #ffffff;
+  --primary-container: #e0e7ff;
+  --on-primary-container: #312e81;
+
+  --secondary: #ffb77a;
+  --on-secondary: #4c2700;
+  --secondary-container: #d37b20;
+  --on-secondary-container: #432100;
+
+  --tertiary: #fff6e4;
+  --tertiary-container: #fed83a;
+  --on-tertiary-container: #725e00;
+
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+
+  --outline: #64748b;
+  --outline-variant: #94a3b8;
+
+  /* Reconciled accent = light mode's actual vivid tone (indigo lives
+     on `primary` here, not `primary-container` — see note above). */
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: #e0e7ff;
+
+  --neu-hi: #ffffff;
+  --neu-lo: #c5ccd6;
+}
+
+/* ------------------------------------------------------------
+   Tailwind token mapping — each --color-x points at the runtime
+   var(--x) above, so bg-surface / text-on-surface / etc. swap
+   live when .dark / .light toggles on <html>, with zero rebuild.
+   ------------------------------------------------------------ */
+@theme {
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-background: var(--background);
+  --color-on-background: var(--on-background);
+
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+
+  /* DESIGN.md's radius scale, via the v4 CSS-first mechanism
+     (this project has no tailwind.config.ts). */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* DESIGN.md's spacing scale — enables p-gutter, gap-unit,
+     p-container-padding, gap-element-gap, etc. */
+  --spacing-unit: 8px;
+  --spacing-element-gap: 12px;
+  --spacing-gutter: 16px;
+  --spacing-container-padding: 24px;
+
+  --font-tactile: "Plus Jakarta Sans", sans-serif;
+}
+
 body {
   background-color: var(--color-void);
-  background-image:
-    linear-gradient(transparent 0%, rgb(139 92 246 / 0.15) 100%),
-    radial-gradient(circle at 50% 0%, rgb(255 46 230 / 0.15), transparent 60%);
-  background-attachment: fixed;
   color: #fff;
   font-family: var(--font-body);
-}
-
-/* ============================================================
-   CUSTOM UTILITIES — replaces the old @layer utilities block.
-   v4 uses @utility instead of @layer utilities for anything
-   that needs to compose into arbitrary values / variants.
-   ============================================================ */
-@utility glass-panel {
-  backdrop-filter: blur(var(--blur-glass));
-  background-color: rgb(255 255 255 / 0.05);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  box-shadow: var(--shadow-glass);
-}
-
-@utility glass-panel-neon {
-  backdrop-filter: blur(var(--blur-glass));
-  background-color: rgb(255 255 255 / 0.05);
-  border: 1px solid rgb(0 246 255 / 0.3);
-  box-shadow: var(--shadow-glass);
-}
-
-@utility text-glow-cyan {
-  text-shadow: 0 0 8px rgb(0 246 255 / 0.8);
-}
-
-@utility text-glow-magenta {
-  text-shadow: 0 0 8px rgb(255 46 230 / 0.8);
-}
-
-@utility bg-synth-grid {
-  background-image:
-    linear-gradient(transparent 0%, rgb(139 92 246 / 0.15) 100%),
-    radial-gradient(circle at 50% 0%, rgb(255 46 230 / 0.15), transparent 60%);
-}
-
-@utility backdrop-blur-glass {
-  backdrop-filter: blur(var(--blur-glass));
 }
 
 @utility momentum-scroll {
@@ -80,17 +255,53 @@ body {
   scroll-behavior: smooth;
 }
 
-@utility touch-target {
-  min-height: 44px;
-  min-width: 44px;
+/* ------------------------------------------------------------
+   DEPRECATED — glassmorphism/blur utilities, kept only for the
+   legacy pages noted above.
+   ------------------------------------------------------------ */
+@utility glass-panel {
+  backdrop-filter: blur(var(--blur-glass));
+  background-color: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: var(--shadow-glass);
+}
+@utility glass-panel-neon {
+  backdrop-filter: blur(var(--blur-glass));
+  background-color: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(0 246 255 / 0.3);
+  box-shadow: var(--shadow-glass);
+}
+@utility text-glow-cyan {
+  text-shadow: 0 0 8px rgb(0 246 255 / 0.8);
+}
+@utility text-glow-magenta {
+  text-shadow: 0 0 8px rgb(255 46 230 / 0.8);
+}
+@utility backdrop-blur-glass {
+  backdrop-filter: blur(var(--blur-glass));
 }
 
-/* Global baseline: every button and link-styled-as-button gets a
-   44x44 minimum hit area on touch devices, per WCAG 2.5.5 / iOS HIG. */
-@media (pointer: coarse) {
+/* ============================================================
+   NEUMORPHIC PHYSICS — dual-directional shadows per DESIGN.md.
+   Colors reference the runtime --neu-hi/--neu-lo vars so they
+   invert correctly on every theme change.
+   ============================================================ */
+@utility neu-extruded {
+  box-shadow: -6px -6px 12px var(--neu-hi), 6px 6px 12px var(--neu-lo);
+}
 
-  button,
-  a[role="button"] {
-    min-height: 44px;
-  }
+@utility neu-inset {
+  box-shadow: inset 6px 6px 12px var(--neu-lo), inset -6px -6px 12px var(--neu-hi);
+}
+
+/* Composed with neu-extruded on buttons (matches the reference
+   files' own class composition — .neu-button never carries its
+   own resting shadow, only the transition + pressed state). */
+@utility neu-button {
+  transition: all 150ms ease-out;
+}
+
+.neu-button:active {
+  box-shadow: inset 6px 6px 12px var(--neu-lo), inset -6px -6px 12px var(--neu-hi);
+  transform: translate(1px, 1px);
 }

@@ -17,32 +17,23 @@ export function BottomNav() {
 
     return (
         <nav
-            className="flex md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-glass bg-void/90 border-t border-white/10"
-            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            className="flex md:hidden fixed bottom-0 inset-x-0 z-50 justify-around items-center bg-surface neu-extruded px-4 pt-2"
+            style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}
         >
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || pathname?.startsWith(`${href}/`);
                 return (
-                    <Link
-                        key={href}
-                        href={href}
-                        className="flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] min-w-[44px]"
-                    >
-                        <Icon
-                            size={22}
-                            className={cn(
-                                "transition-colors",
-                                active
-                                    ? "text-neon-cyan drop-shadow-[0_0_6px_rgba(0,246,255,0.8)]"
-                                    : "text-white/40"
-                            )}
-                        />
+                    <Link key={href} href={href} className="flex flex-col items-center justify-center gap-1 py-1.5">
+                        {/* 48x48px minimum touch target */}
                         <span
                             className={cn(
-                                "text-[10px] uppercase tracking-wide",
-                                active ? "text-neon-cyan" : "text-white/40"
+                                "flex items-center justify-center w-12 h-12 rounded-xl bg-surface transition-all duration-150",
+                                active ? "neu-inset text-accent translate-y-0.5" : "text-on-surface-variant"
                             )}
                         >
+                            <Icon size={20} />
+                        </span>
+                        <span className={cn("text-[10px] font-semibold uppercase tracking-wide", active ? "text-accent" : "text-on-surface-variant")}>
                             {label}
                         </span>
                     </Link>

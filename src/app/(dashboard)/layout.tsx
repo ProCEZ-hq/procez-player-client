@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardSidebar } from "@/components/nav/DashboardSidebar";
-import { BottomNav } from "@/components/nav/BottomNav";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { DashboardShell } from "@/components/nav/DashboardShell";
 
 export default async function DashboardLayout({
     children,
@@ -19,12 +19,8 @@ export default async function DashboardLayout({
     }
 
     return (
-        <div className="min-h-screen flex">
-            <DashboardSidebar />
-            {/* pb-24 clears the fixed BottomNav on mobile; md:pb-0 since the
-          sidebar takes over and BottomNav is hidden at that breakpoint */}
-            <main className="flex-1 min-w-0 pb-24 md:pb-0">{children}</main>
-            <BottomNav />
-        </div>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+            <DashboardShell>{children}</DashboardShell>
+        </ThemeProvider>
     );
 }
