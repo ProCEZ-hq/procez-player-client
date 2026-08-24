@@ -1,23 +1,17 @@
 import { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
+interface NeuCardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  glow?: "cyan" | "magenta" | "none";
+  inset?: boolean;
 }
 
-export function GlassCard({
-  children,
-  glow = "none",
-  className,
-  ...props
-}: GlassCardProps) {
+export function NeuCard({ children, inset = false, className, ...props }: NeuCardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl p-6 backdrop-blur-glass bg-white/[0.04] border border-white/10 shadow-glass transition-all duration-300",
-        glow === "cyan" && "border-neon-cyan/30 hover:shadow-neon-cyan",
-        glow === "magenta" && "border-neon-magenta/30 hover:shadow-neon-magenta",
+        "rounded-3xl p-6 bg-surface",
+        inset ? "neu-inset" : "neu-extruded",
         className
       )}
       {...props}
@@ -26,3 +20,6 @@ export function GlassCard({
     </div>
   );
 }
+
+// Keep GlassCard as alias so existing imports don't break
+export { NeuCard as GlassCard };

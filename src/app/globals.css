@@ -1,78 +1,63 @@
 @import "tailwindcss";
 
-/* ============================================================
-   THEME TOKENS — replaces tailwind.config.ts `extend`
-   Every --color-*, --font-*, --shadow-* below auto-generates
-   utilities: bg-void, text-neon-cyan, shadow-neon-cyan, etc.
-   ============================================================ */
 @theme {
-  --color-void: #0a0a12;
-  --color-surface: #12121f;
+  --color-surface: #e8ecf2;
+  --color-surface-dim: #d0d7e2;
+  --color-surface-bright: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f5f9;
+  --color-surface-container: #dce1e9;
+  --color-surface-container-high: #cbd5e1;
+  --color-surface-container-highest: #94a3b8;
+  --color-surface-variant: #e2e8f0;
 
-  --color-neon-cyan: #00f6ff;
-  --color-neon-magenta: #ff2ee6;
-  --color-neon-violet: #8b5cf6;
-  --color-neon-lime: #c6ff00;
+  --color-on-surface: #1e293b;
+  --color-on-surface-variant: #475569;
+  --color-outline: #64748b;
+  --color-outline-variant: #94a3b8;
 
-  --font-display: "Orbitron", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --color-primary: #4f46e5;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e0e7ff;
+  --color-on-primary-container: #312e81;
 
-  --shadow-neon-cyan: 0 0 5px #00f6ff, 0 0 20px rgb(0 246 255 / 0.35);
-  --shadow-neon-magenta: 0 0 5px #ff2ee6, 0 0 20px rgb(255 46 230 / 0.35);
-  --shadow-glass: 0 8px 32px rgb(0 0 0 / 0.45);
+  --color-secondary: #ffb77a;
+  --color-secondary-container: #d37b20;
+  --color-on-secondary-container: #432100;
 
-  --blur-xs: 2px;
-  --blur-glass: 16px;
+  --color-tertiary-container: #fed83a;
+  --color-on-tertiary-container: #725e00;
+
+  --color-highlight: #ffffff;
+  --color-shadow: #c5ccd6;
+
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
 }
 
-/* ============================================================
-   BASE
-   ============================================================ */
 body {
-  background-color: var(--color-void);
-  background-image:
-    linear-gradient(transparent 0%, rgb(139 92 246 / 0.15) 100%),
-    radial-gradient(circle at 50% 0%, rgb(255 46 230 / 0.15), transparent 60%);
-  background-attachment: fixed;
-  color: #fff;
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
   font-family: var(--font-body);
 }
 
-/* ============================================================
-   CUSTOM UTILITIES — replaces the old @layer utilities block.
-   v4 uses @utility instead of @layer utilities for anything
-   that needs to compose into arbitrary values / variants.
-   ============================================================ */
-@utility glass-panel {
-  backdrop-filter: blur(var(--blur-glass));
-  background-color: rgb(255 255 255 / 0.05);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  box-shadow: var(--shadow-glass);
+/* Neumorphic utilities */
+@utility neu-extruded {
+  box-shadow: -6px -6px 12px #ffffff, 6px 6px 12px #c5ccd6;
 }
 
-@utility glass-panel-neon {
-  backdrop-filter: blur(var(--blur-glass));
-  background-color: rgb(255 255 255 / 0.05);
-  border: 1px solid rgb(0 246 255 / 0.3);
-  box-shadow: var(--shadow-glass);
+@utility neu-inset {
+  box-shadow: inset 6px 6px 12px #c5ccd6, inset -6px -6px 12px #ffffff;
 }
 
-@utility text-glow-cyan {
-  text-shadow: 0 0 8px rgb(0 246 255 / 0.8);
+@utility neu-button {
+  box-shadow: -6px -6px 12px #ffffff, 6px 6px 12px #c5ccd6;
+  transition: all 150ms ease-out;
 }
 
-@utility text-glow-magenta {
-  text-shadow: 0 0 8px rgb(255 46 230 / 0.8);
-}
-
-@utility bg-synth-grid {
-  background-image:
-    linear-gradient(transparent 0%, rgb(139 92 246 / 0.15) 100%),
-    radial-gradient(circle at 50% 0%, rgb(255 46 230 / 0.15), transparent 60%);
-}
-
-@utility backdrop-blur-glass {
-  backdrop-filter: blur(var(--blur-glass));
+@utility neu-button-active {
+  box-shadow: inset 6px 6px 12px #c5ccd6, inset -6px -6px 12px #ffffff;
+  transform: translate(1px, 1px);
 }
 
 @utility momentum-scroll {
@@ -80,17 +65,11 @@ body {
   scroll-behavior: smooth;
 }
 
-@utility touch-target {
-  min-height: 44px;
-  min-width: 44px;
+@keyframes fillProgress {
+  from { width: 0; }
+  to { width: 68%; }
 }
 
-/* Global baseline: every button and link-styled-as-button gets a
-   44x44 minimum hit area on touch devices, per WCAG 2.5.5 / iOS HIG. */
-@media (pointer: coarse) {
-
-  button,
-  a[role="button"] {
-    min-height: 44px;
-  }
+.progress-fill {
+  animation: fillProgress 1.5s ease-out forwards;
 }

@@ -1,99 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Radio, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { NeuCard } from "@/components/ui/GlassCard";
 
 interface BroadcastPayload {
-    id: string;
-    tournament_id: string;
-    room_id: string;
-    room_password: string;
-    created_at: string;
+  id: string;
+  tournament_id: string;
+  room_id: string;
+  room_password: string;
+  created_at: string;
 }
 
-interface TournamentLookup {
-    id: string;
-    name: string;
-}
-
-interface LiveBroadcast extends BroadcastPayload {
-    tournamentName: string;
-}
+interface TournamentLookup { id: string; name: string; }
+interface LiveBroadcast extends BroadcastPayload { tournamentName: string; }
 
 export function BroadcastListener({ tournaments }: { tournaments: TournamentLookup[] }) {
-    const supabase = createClient();
-    const [broadcasts, setBroadcasts] = useState<LiveBroadcast[]>([]);
+  const supabase = createClient();
+  const [broadcasts, setBroadcasts] = useState<LiveBroadcast[]>([]);
 
-    useEffect(() => {
-        if (tournaments.length === 0) return;
+  useEffect(() => {
+    if (tournaments.length === 0) return;
+    const nameById = new Map(tournaments.map((t) => [t.id, t.name]));
 
-        const nameById = new Map(tournaments.map((t) => [t.id, t.name]));
+    const channel = supabase
+      .channel("schema-db-changes")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "match_broadcasts" }, (payload) => {
+        const row = payload.new as BroadcastPayload;
+        const tournamentName = nameById.get(row.tournament_id);
+        if (!tournamentName) return;
+        setBroadcasts((prev) => [{ ...row, tournamentName }, ...prev]);
+      })
+      .subscribe();
 
-        const channel = supabase
-            .channel("schema-db-changes")
-            .on(
-                "postgres_changes",
-                { event: "INSERT", schema: "public", table: "match_broadcasts" },
-                (payload) => {
-                    const row = payload.new as BroadcastPayload;
+    return () => { supabase.removeChannel(channel); };
+  }, [supabase, tournaments]);
 
-                    // RLS already restricts which rows this client receives at all,
-                    // but we still only surface it if it matches a tournament this
-                    // user's current dashboard view actually knows about.
-                    const tournamentName = nameById.get(row.tournament_id);
-                    if (!tournamentName) return;
+  function dismiss(id: string) { setBroadcasts((prev) => prev.filter((b) => b.id !== id)); }
 
-                    setBroadcasts((prev) => [{ ...row, tournamentName }, ...prev]);
-                }
-            )
-            .subscribe();
+  if (broadcasts.length === 0) return null;
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase, tournaments]);
+  return (
+    <div className="space-y-3">
+      {broadcasts.map((b) => (
+        <NeuCard key={b.id} className="relative border-2 border-primary/30">
+          <button
+            onClick={() => dismiss(b.id)}
+            className="absolute top-3 right-3 neu-button w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary"
+            aria-label="Dismiss"
+          >
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
 
-    function dismiss(id: string) {
-        setBroadcasts((prev) => prev.filter((b) => b.id !== id));
-    }
+          <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
+            <span className="material-symbols-outlined text-sm animate-pulse">radio</span>
+            Live Match Room — {b.tournamentName}
+          </div>
 
-    if (broadcasts.length === 0) return null;
-
-    return (
-        <div className="space-y-3">
-            {broadcasts.map((b) => (
-                <GlassCard
-                    key={b.id}
-                    glow="magenta"
-                    className="border-2 border-neon-magenta/60 bg-neon-magenta/[0.07] relative animate-in fade-in slide-in-from-top-2"
-                >
-                    <button
-                        onClick={() => dismiss(b.id)}
-                        className="absolute top-3 right-3 text-white/40 hover:text-white transition-colors"
-                        aria-label="Dismiss"
-                    >
-                        <X size={16} />
-                    </button>
-
-                    <div className="flex items-center gap-2 text-neon-magenta text-xs uppercase tracking-wide mb-2">
-                        <Radio size={14} className="animate-pulse" />
-                        Live Match Room — {b.tournamentName}
-                    </div>
-
-                    <div className="flex flex-wrap gap-6">
-                        <div>
-                            <p className="text-white/50 text-xs uppercase tracking-wide">Room ID</p>
-                            <p className="font-mono text-lg text-white tracking-wider">{b.room_id}</p>
-                        </div>
-                        <div>
-                            <p className="text-white/50 text-xs uppercase tracking-wide">Password</p>
-                            <p className="font-mono text-lg text-white tracking-wider">{b.room_password}</p>
-                        </div>
-                    </div>
-                </GlassCard>
-            ))}
-        </div>
-    );
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Room ID</p>
+              <p className="font-mono text-lg text-on-surface tracking-wider">{b.room_id}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Password</p>
+              <p className="font-mono text-lg text-on-surface tracking-wider">{b.room_password}</p>
+            </div>
+          </div>
+        </NeuCard>
+      ))}
+    </div>
+  );
 }

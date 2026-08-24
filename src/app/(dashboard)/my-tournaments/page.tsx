@@ -5,84 +5,55 @@ import { TeamCard } from "@/components/team/TeamCard";
 import { BroadcastListener } from "@/components/team/BroadcastListener";
 
 interface TeamRow {
-    id: string;
-    team_code: string;
-    leader_id: string;
-    tournaments: { id: string; name: string; game_name: string; team_size: number } | null;
-    roster_slots: {
-        id: string;
-        user_id: string;
-        joined_at: string;
-        profiles: { gamertag: string; avatar_url: string | null } | null;
-    }[];
+  id: string; team_code: string; leader_id: string;
+  tournaments: { id: string; name: string; game_name: string; team_size: number } | null;
+  roster_slots: { id: string; user_id: string; joined_at: string; profiles: { gamertag: string; avatar_url: string | null } | null }[];
 }
 
 export default async function MyTournamentsPage() {
-    const supabase = await createClient();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/my-tournaments");
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+  const { data: teams, error } = await supabase
+    .from("teams")
+    .select(`id, team_code, leader_id, tournaments ( id, name, game_name, team_size ), roster_slots ( id, user_id, joined_at, profiles ( gamertag, avatar_url ) )`)
+    .order("created_at", { ascending: false });
 
-    if (!user) {
-        redirect("/login?next=/my-tournaments");
-    }
+  if (error) throw new Error(error.message);
 
-    const { data: teams, error } = await supabase
-        .from("teams")
-        .select(
-            `
-      id, team_code, leader_id,
-      tournaments ( id, name, game_name, team_size ),
-      roster_slots ( id, user_id, joined_at, profiles ( gamertag, avatar_url ) )
-    `
-        )
-        .order("created_at", { ascending: false });
+  const rows = (teams ?? []) as unknown as TeamRow[];
+  const tournamentLookup = rows.map((t) => t.tournaments).filter((t): t is NonNullable<typeof t> => t !== null).map((t) => ({ id: t.id, name: t.name }));
 
-    if (error) {
-        throw new Error(error.message);
-    }
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-4xl font-extrabold text-on-surface mb-2 tracking-tight">My Tournaments</h1>
+        <p className="text-on-surface-variant">Your teams, rosters, and invite codes.</p>
+      </div>
 
-    const rows = (teams ?? []) as unknown as TeamRow[];
+      <BroadcastListener tournaments={tournamentLookup} />
+      <JoinTeamForm />
 
-    const tournamentLookup = rows
-        .map((t) => t.tournaments)
-        .filter((t): t is NonNullable<typeof t> => t !== null)
-        .map((t) => ({ id: t.id, name: t.name }));
-
-    return (
-        <div className="min-h-screen px-6 py-12 max-w-4xl mx-auto space-y-8">
-            <div>
-                <h1 className="text-3xl font-display font-bold text-glow-cyan mb-2">
-                    My Tournaments
-                </h1>
-                <p className="text-white/50">Your teams, rosters, and invite codes.</p>
-            </div>
-
-            <BroadcastListener tournaments={tournamentLookup} />
-
-            <JoinTeamForm />
-
-            {rows.length === 0 ? (
-                <p className="text-white/40 text-center py-8">
-                    You&apos;re not on any team yet. Register for a tournament or join one with a
-                    team code above.
-                </p>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {rows.map((team) => (
-                        <TeamCard
-                            key={team.id}
-                            teamCode={team.team_code}
-                            isLeader={team.leader_id === user.id}
-                            tournamentName={team.tournaments?.name ?? "Unknown tournament"}
-                            gameName={team.tournaments?.game_name ?? ""}
-                            teamSize={team.tournaments?.team_size ?? 0}
-                            roster={team.roster_slots}
-                        />
-                    ))}
-                </div>
-            )}
+      {rows.length === 0 ? (
+        <p className="text-on-surface-variant text-center py-8">
+          You&apos;re not on any team yet. Register for a tournament or join one with a team code above.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {rows.map((team) => (
+            <TeamCard
+              key={team.id}
+              teamCode={team.team_code}
+              isLeader={team.leader_id === user.id}
+              tournamentName={team.tournaments?.name ?? "Unknown tournament"}
+              gameName={team.tournaments?.game_name ?? ""}
+              teamSize={team.tournaments?.team_size ?? 0}
+              roster={team.roster_slots}
+            />
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 }
