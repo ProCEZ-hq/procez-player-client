@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Home, Compass, Users, User, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { LogoutButton } from "@/components/nav/LogoutButton";
 
 const NAV_ITEMS = [
     { href: "/home", label: "Home", icon: Home },
@@ -61,6 +62,10 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                     );
                 })}
             </nav>
+
+            <div className="px-1 mb-2">
+                <LogoutButton collapsed={collapsed} />
+            </div>
 
             <div className="flex items-center justify-between px-1 mb-2 gap-2">
                 <ThemeToggle />
