@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { DashboardShell } from "@/components/nav/DashboardShell";
 
 export default async function DashboardLayout({
@@ -18,9 +17,5 @@ export default async function DashboardLayout({
         redirect("/login?next=/home");
     }
 
-    return (
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-            <DashboardShell>{children}</DashboardShell>
-        </ThemeProvider>
-    );
+    return <DashboardShell>{children}</DashboardShell>;
 }
