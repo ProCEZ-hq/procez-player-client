@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createOrderLimiter } from "@/lib/rate-limit";
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID!;
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET!;
@@ -19,6 +20,15 @@ export async function POST(req: Request) {
 
     if (!user) {
         return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const { success, reset } = await createOrderLimiter.limit(user.id);
+    if (!success) {
+        const retryAfterSeconds = Math.max(0, Math.ceil((reset - Date.now()) / 1000));
+        return NextResponse.json(
+            { error: "Too many checkout attempts. Please wait a moment and try again." },
+            { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+        );
     }
 
     // Read the tournament straight from Supabase (not Redis) — checkout needs

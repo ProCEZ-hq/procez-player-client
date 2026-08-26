@@ -23,25 +23,47 @@ export function JoinTeamForm({ defaultCode = "" }: JoinTeamFormProps) {
         e.preventDefault();
         setError(null);
         setSuccess(false);
+
         const trimmed = code.trim().toUpperCase();
         if (!trimmed) {
             setError("Enter a team code.");
             return;
         }
+
         setLoading(true);
+
         const {
             data: { user },
         } = await supabase.auth.getUser();
+
         if (!user) {
             router.push(`/login?next=${encodeURIComponent(`/join?code=${trimmed}`)}`);
             return;
         }
-        const { error: rpcError } = await supabase.rpc("join_team", { p_invite_code: trimmed });
+
+        const res = await fetch("/api/join-team", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ inviteCode: trimmed }),
+        });
+
+        const data = await res.json();
         setLoading(false);
-        if (rpcError) {
-            setError(rpcError.message);
+
+        if (!res.ok) {
+            if (res.status === 429) {
+                const retryAfter = res.headers.get("Retry-After");
+                setError(
+                    retryAfter
+                        ? `Too many attempts. Try again in ${retryAfter}s.`
+                        : "Too many attempts. Please wait a moment and try again."
+                );
+            } else {
+                setError(data.error ?? "Could not join team.");
+            }
             return;
         }
+
         setSuccess(true);
         setCode("");
         router.refresh();
@@ -64,8 +86,16 @@ export function JoinTeamForm({ defaultCode = "" }: JoinTeamFormProps) {
                     Join
                 </TactileButton>
             </form>
-            {error && <p className="text-error text-sm neu-inset bg-surface-container-lowest rounded-lg px-3 py-2 mt-3">{error}</p>}
-            {success && <p className="text-accent text-sm neu-inset bg-surface-container-lowest rounded-lg px-3 py-2 mt-3">You&apos;ve joined the team!</p>}
+            {error && (
+                <p className="text-error text-sm neu-inset bg-surface-container-lowest rounded-lg px-3 py-2 mt-3">
+                    {error}
+                </p>
+            )}
+            {success && (
+                <p className="text-accent text-sm neu-inset bg-surface-container-lowest rounded-lg px-3 py-2 mt-3">
+                    You&apos;ve joined the team!
+                </p>
+            )}
         </TactileCard>
     );
 }
