@@ -1,21 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { TactileCard } from "@/components/ui/TactileCard";
 import { TactileButton } from "@/components/ui/TactileButton";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { getSiteUrl } from "@/lib/site-url";
 
-export default function LoginPage() {
+const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
+    oauth_denied: "Google sign-in was cancelled or denied.",
+    auth_callback_failed: "Google sign-in couldn't complete. Please try again.",
+    missing_code: "Google sign-in didn't return a valid response. Please try again.",
+};
+
+function LoginPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClient();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(() => {
+        const code = searchParams.get("error");
+        if (!code) return null;
+        const reason = searchParams.get("reason");
+        const base = CALLBACK_ERROR_MESSAGES[code] ?? "Sign-in failed. Please try again.";
+        return reason ? `${base} (${reason})` : base;
+    });
     const [loading, setLoading] = useState(false);
     const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -42,7 +56,7 @@ export default function LoginPage() {
         setGoogleLoading(true);
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
-            options: { redirectTo: `${window.location.origin}/auth/callback` },
+            options: { redirectTo: `${getSiteUrl()}/auth/callback` },
         });
         if (error) {
             setError(error.message);
@@ -109,7 +123,7 @@ export default function LoginPage() {
                     <span className="text-xs uppercase tracking-wide text-on-surface-variant">Or</span>
                     <div className="flex-1 h-px bg-outline-variant/40" />
                 </div>
-                
+
                 <button
                     type="button"
                     onClick={handleGoogleLogin}
@@ -128,5 +142,13 @@ export default function LoginPage() {
                 </p>
             </TactileCard>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={null}>
+            <LoginPageContent />
+        </Suspense>
     );
 }

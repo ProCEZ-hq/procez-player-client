@@ -8,6 +8,7 @@ import { TactileCard } from "@/components/ui/TactileCard";
 import { TactileButton } from "@/components/ui/TactileButton";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -53,7 +54,7 @@ export default function RegisterPage() {
         setGoogleLoading(true);
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
-            options: { redirectTo: `${window.location.origin}/auth/callback` },
+            options: { redirectTo: `${getSiteUrl()}/auth/callback` },
         });
         if (error) {
             setError(error.message);
